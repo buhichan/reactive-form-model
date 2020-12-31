@@ -138,7 +138,7 @@ If you are using ant-design, u can directly copy these.
 import { Form, Col, Row, Button } from "antd"
 import { FormItemProps } from "antd/lib/form"
 import * as React from "react"
-import { AbstractControl, ValidationInfo, FormControls, FormControlList } from "./level1-model"
+import { AbstractControl, ValidationInfo, FormControlList } from "reactive-form-model"
 import { CloseOutlined, PlusOutlined, MinusOutlined } from "@ant-design/icons"
 import { useSubscription } from "use-subscription"
 
@@ -157,7 +157,7 @@ export function FormItem<T, Meta>({
     const error = useObservable(field.error)
 
     return (
-        <Form.Item labelCol={{span:4}} wrapperCol={{span:20}} hasFeedback help={!!error ? error : undefined} validateStatus={!!error ? "error" : undefined} {...rest}>
+        <Form.Item labelCol={{span:4}} wrapperCol={{span:20}} hasFeedback help={!!error ? String(error) : undefined} validateStatus={!!error ? "error" : undefined} {...rest}>
             {children(
                 {
                     value: value === null ? undefined : value,
@@ -184,7 +184,7 @@ export function FormList<Meta, Children extends AbstractControl<any, any>>({
     const metadata = useObservable(field.metadata)
     const error = useObservable(field.error)
     return (
-        <Form.Item  labelCol={{span:4}} wrapperCol={{span:20}} hasFeedback help={!!error ? error : undefined} validateStatus={!!error ? "error" : undefined} {...rest}>
+        <Form.Item  labelCol={{span:4}} wrapperCol={{span:20}} hasFeedback help={!!error ? String(error) : undefined} validateStatus={!!error ? "error" : undefined} {...rest}>
             <Row>
                 <Col span={24}>
                     {items.map((x, i) => {

@@ -10,7 +10,7 @@ export class FormControlList<Meta, Children extends AbstractControl<unknown>, Ty
         private options?: Omit<FormControlOptions<Type[], Meta>, "middleware">
     ) {}
     private nextChildId = 0
-    private children$: BehaviorSubject<
+    children: BehaviorSubject<
         {
             key: number
             child: Children
@@ -23,18 +23,15 @@ export class FormControlList<Meta, Children extends AbstractControl<unknown>, Ty
             }
         })
     )
-    get children() {
-        return this.children$.value
-    }
     currentValue = this.defaultValue
     metadata = this.options?.metadata || EMPTY
-    value = this.children$.pipe(
+    value = this.children.pipe(
         switchMap(x => {
             return x.length === 0 ? of([]) : combineLatest(x.map(x => x.child.value as Observable<Type>)).pipe(debounce(async () => {}))
         })
     )
     error = combineLatest([
-        this.children$.pipe(
+        this.children.pipe(
             switchMap(x => {
                 return !x.length ? of([]) : combineLatest(x.map(x => x.child.error))
             })
@@ -47,7 +44,7 @@ export class FormControlList<Meta, Children extends AbstractControl<unknown>, Ty
         })
     )
     change = (value: Type[]) => {
-        this.children$.next(
+        this.children.next(
             value.map((item, i) => {
                 return {
                     key: this.nextChildId++,
@@ -57,31 +54,31 @@ export class FormControlList<Meta, Children extends AbstractControl<unknown>, Ty
         )
     }
     push(value: Type) {
-        this.children$.next(
-            this.children$.value.concat({
+        this.children.next(
+            this.children.value.concat({
                 key: this.nextChildId++,
                 child: this.createChild(value),
             })
         )
     }
     insert(value: Type, index: number) {
-        const clone = this.children$.value.slice()
+        const clone = this.children.value.slice()
         clone.splice(index, 0, {
             key: this.nextChildId++,
             child: this.createChild(value),
         })
-        this.children$.next(clone)
+        this.children.next(clone)
     }
     delete(index: number) {
-        const clone = this.children$.value.slice()
+        const clone = this.children.value.slice()
         clone.splice(index, 1)
-        this.children$.next(clone)
+        this.children.next(clone)
     }
     swap(indexA: number, indexB: number) {
-        const clone = this.children$.value.slice()
+        const clone = this.children.value.slice()
         const tmp = clone[indexA]
         clone[indexA] = clone[indexB]
         clone[indexB] = tmp
-        this.children$.next(clone)
+        this.children.next(clone)
     }
 }

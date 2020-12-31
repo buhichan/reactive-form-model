@@ -123,19 +123,19 @@ describe("FormControlList", () => {
         expect(metadataListener).toBeCalledTimes(1)
         expect(metadataListener).toBeCalledWith(arrayInputMetadata)
 
-        expect(fieldModel.children.length).toBe(2)
+        expect(fieldModel.children.value.length).toBe(2)
 
         const childMetadataListener1 = jest.fn()
-        fieldModel.children[0].child.children.value.metadata.subscribe(childMetadataListener1)
+        fieldModel.children.value[0].child.children.value.metadata.subscribe(childMetadataListener1)
         const childMetadataListener2 = jest.fn()
-        fieldModel.children[1].child.children.value.metadata.subscribe(childMetadataListener2)
+        fieldModel.children.value[1].child.children.value.metadata.subscribe(childMetadataListener2)
 
         await wait(10)
 
         expect(childMetadataListener1).toBeCalledWith(isSelectField)
         expect(childMetadataListener2).toBeCalledWith(isNotSelectField)
 
-        fieldModel.children[0].child.children.type.change("input")
+        fieldModel.children.value[0].child.children.type.change("input")
 
         await wait(10)
 

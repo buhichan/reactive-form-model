@@ -189,7 +189,7 @@ export function FormList<Meta, Children extends AbstractControl<any, any>>({
                 <Col span={24}>
                     {items.map((x, i) => {
                         return (
-                            <Row gutter={8} key={x.id}>
+                            <Row gutter={8} key={x.key}>
                                 <Col>
                                     <Button
                                         icon={<MinusOutlined />}
@@ -198,8 +198,8 @@ export function FormList<Meta, Children extends AbstractControl<any, any>>({
                                         }}
                                     ></Button>
                                 </Col>
-                                <Col span={22} key={x.id}>
-                                    {children(x.control, metadata, i)}
+                                <Col span={22}>
+                                    {children(x.child, metadata, i)}
                                 </Col>
                             </Row>
                         )

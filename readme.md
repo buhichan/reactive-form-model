@@ -80,7 +80,7 @@ export function registrationFormModel(){
         refCount()
     )
 
-    const address = new FormControlList([] as {province: string, city: string}[], value=>{
+    const addresses = new FormControlList([] as {province: string, city: string}[], value=>{
         const province = new FormControl(value.province, {
             //provice a list for use when rendered, but we don't care what component is used in view layer.
             metadata: provinceList
@@ -114,8 +114,8 @@ export function registrationFormModel(){
         username,
         password,
         passwordConfirm,
-        phonenumbers,
-        address
+        phoneNumbers,
+        addresses
     }, {
         validator: async v=>{
             if(!v.username){
@@ -126,6 +126,167 @@ export function registrationFormModel(){
             }
         }
     })
+}
+
+```
+
+Then you create a connection component between the model and how to render then, this needs only done once and u can use in all forms.
+
+If you are using ant-design, u can directly copy these.
+
+```tsx
+import { Form, Col, Row, Button } from "antd"
+import { FormItemProps } from "antd/lib/form"
+import * as React from "react"
+import { AbstractControl, ValidationInfo, FormControls, FormControlList } from "./level1-model"
+import { CloseOutlined, PlusOutlined, MinusOutlined } from "@ant-design/icons"
+import { useSubscription } from "use-subscription"
+
+type FormItemRenderChildren<T, Meta> = (inputProps: { value?: T; onChange?: (v: T) => void }, behavior: Meta | null, err: ValidationInfo) => React.ReactNode
+
+export function FormItem<T, Meta>({
+    field,
+    children,
+    ...rest
+}: Omit<FormItemProps, "name" | "children"> & {
+    field: AbstractControl<T, Meta>
+    children: FormItemRenderChildren<T, Meta>
+}) {
+    const value = useObservable(field.value)
+    const metadata = useObservable(field.metadata)
+    const error = useObservable(field.error)
+
+    return (
+        <Form.Item labelCol={{span:4}} wrapperCol={{span:20}} hasFeedback help={!!error ? error : undefined} validateStatus={!!error ? "error" : undefined} {...rest}>
+            {children(
+                {
+                    value: value === null ? undefined : value,
+                    onChange: field.change,
+                },
+                meta,
+                error
+            )}
+        </Form.Item>
+    )
+}
+
+
+//eslint-disable-next-line
+export function FormList<Meta, Children extends AbstractControl<any, any>>({
+    field,
+    children,
+    ...rest
+}: Omit<FormItemProps, "name" | "children"> & {
+    field: FormControlList<Meta, Children>
+    children: (child: Children, arrayMeta: Meta | null, index: number) => React.ReactNode
+}) {
+    const items = useObservable(field.children)
+    const metadata = useObservable(field.metadata)
+    const error = useObservable(field.error)
+    return (
+        <Form.Item  labelCol={{span:4}} wrapperCol={{span:20}} hasFeedback help={!!error ? error : undefined} validateStatus={!!error ? "error" : undefined} {...rest}>
+            <Row>
+                <Col span={24}>
+                    {items.map((x, i) => {
+                        return (
+                            <Row gutter={8} key={x.id}>
+                                <Col>
+                                    <Button
+                                        icon={<MinusOutlined />}
+                                        onClick={() => {
+                                            field.delete(i)
+                                        }}
+                                    ></Button>
+                                </Col>
+                                <Col span={22} key={x.id}>
+                                    {children(x.control, metadata, i)}
+                                </Col>
+                            </Row>
+                        )
+                    })}
+                </Col>
+            </Row>
+            <Row>
+                <Col span={24}>
+                    <Button
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                            //eslint-disable-next-line
+                            field.push({} as any)
+                        }}
+                    ></Button>
+                </Col>
+            </Row>
+        </Form.Item>
+    )
+}
+
+function useObservable<T>(ob: Observable<T>){
+    const currentValue = useRef(null as null | T)
+    return useSubscription(useMemo(()=>{
+        return {
+            getCurrentValue: ()=>currentValue.value,
+            subscribe: cb=>{
+                const sub = ob.subscribe(cb)
+                return ()=>sub.unsubscribe()
+            }
+        }
+    }, [ob]))
+}
+```
+
+Last u render it, this needs to be done for every single form.
+
+```tsx
+
+function App(){
+    const form = useMemo(registrationFormModel,[])
+
+    const hasError = useObservable(form.error)
+
+    return <Form>
+        <FormItem label={"UserName"} field={form.children.username}>
+            {(props)=>{
+                return <Input {...props} maxLength={24}>
+            }}
+        </FormItem>
+        <FormItem label={"Password"} field={form.children.password}>
+            {(props)=>{
+                return <Input {...props} maxLength={24} type="password">
+            }}
+        </FormItem>
+        <FormItem label={"Confirm Password"} field={form.children.passwordConfirm}>
+            {(props)=>{
+                return <Input {...props} maxLength={24} type="password">
+            }}
+        </FormItem>
+        <FormList label="PhoneNumber" field={form.children.phoneNumbers}>
+            {field=>{
+                return <FormItem field={field}>
+                    {(props)=>{
+                        return <Input {...props} maxLength={24}>
+                    }}
+                </FormItem>
+            }}
+        </FormList>
+        <FormList label="Addresses" field={form.children.addresses}>
+            {field=>{
+                return <>
+                    <FormItem field={field.children.province}>
+                        {(props, options)=>{
+                            return <Select {...props} options={options}>
+                        }}
+                    </FormItem>
+                    <FormItem field={field.children.city}>
+                        {(props, options)=>{
+                            return <Select {...props} options={options.cityList}>
+                        }}
+                    </FormItem>
+                </>
+            }}
+        </FormList>
+        <Button htmlType="submit" disabled={!!hasErro}>Submit</Button>
+    </Form>
 }
 
 ```

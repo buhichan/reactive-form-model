@@ -222,12 +222,15 @@ export function FormList<Meta, Children extends AbstractControl<any, any>>({
 }
 
 function useObservable<T>(ob: Observable<T>){
-    const currentValue = useRef(null as null | T)
     return useSubscription(useMemo(()=>{
+        let value = null
         return {
-            getCurrentValue: ()=>currentValue.value,
+            getCurrentValue: ()=>value,
             subscribe: cb=>{
-                const sub = ob.subscribe(cb)
+                const sub = ob.subscribe((v)=>{
+                    value = v
+                    cb()
+                })
                 return ()=>sub.unsubscribe()
             }
         }

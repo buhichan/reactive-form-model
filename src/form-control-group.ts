@@ -1,21 +1,25 @@
 import { combineLatest, EMPTY, identity, of, timer } from "rxjs"
 import { debounce, debounceTime, map, scan, switchMap } from "rxjs/operators"
-import { AbstractControl, FormControlOptions, ValidationInfo, ValueOfAbstractControl } from "./types"
+import { AbstractControl, FormControlOptions, HasRef, ValidationInfo, ValueOfAbstractControl } from "./types"
 
 //eslint-disable-next-line
 export class FormControlGroup<
     Children extends Record<string, AbstractControl<any, any>>,
     Meta,
     Type = { [k in keyof Children]: ValueOfAbstractControl<Children[k]> }
-> implements AbstractControl<Type, Meta> {
-    constructor(public children: Children, private options?: FormControlOptions<Type, Meta>) {}
+> implements AbstractControl<Type, Meta>, HasRef {
+    constructor(public children: Children, private options?: Omit<FormControlOptions<Type, Meta>, "middleware">) {}
     metadata = this.options?.metadata || EMPTY
     private formEntries = (Object.keys(this.children) as (keyof Children)[]).map(k => {
         return [k, this.children[k]] as const
     })
     value = combineLatest(
         this.formEntries.map(([k, control]) => {
-            return control.value.pipe(map(value => [k, value] as const))
+            return control.value.pipe(
+                map(value => {
+                    return [k, value] as const
+                })
+            )
         })
     ).pipe(
         debounce(async () => {}),
@@ -24,8 +28,7 @@ export class FormControlGroup<
                 res[k as keyof Type] = v
                 return res
             }, {} as Type)
-        }),
-        this.options?.middleware ? scan((prev, cur) => this.options!.middleware!(cur, prev)) : identity
+        })
     )
     error = combineLatest([
         ...this.formEntries.map(([k, control]) => {
@@ -37,6 +40,11 @@ export class FormControlGroup<
         for (const k in value) {
             this.children[k]?.change(value[k])
         }
+    }
+
+    dom: HTMLElement | null = null
+    domRef = (ref: HTMLElement | null) => {
+        this.dom = ref
     }
 }
 

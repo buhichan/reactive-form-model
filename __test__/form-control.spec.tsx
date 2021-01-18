@@ -86,4 +86,15 @@ describe("FormControl", () => {
         expect(metadataListener).toBeCalledTimes(1)
         expect(metadataListener).toBeCalledWith(metadata)
     })
+
+    it("support dom ref", () => {
+        const fieldModel = new FormControl({})
+
+        expect(fieldModel.dom).toBe(null)
+        const el = document.createElement("div")
+        fieldModel.domRef(el)
+        expect(fieldModel.dom).toBe(el)
+        fieldModel.domRef(null)
+        expect(fieldModel.dom).toBe(null)
+    })
 })

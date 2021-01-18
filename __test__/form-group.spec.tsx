@@ -40,12 +40,6 @@ describe("FormControlGroup", () => {
                         return errMsg
                     }
                 },
-                middleware: v => {
-                    if (v.username.endsWith("  ")) {
-                        v.username = v.username.slice(0, -1)
-                    }
-                    return v
-                },
                 metadata: of(metadata),
             }
         )
@@ -87,13 +81,21 @@ describe("FormControlGroup", () => {
         await wait(10)
 
         expect(valueChanged).toBeCalledTimes(2)
-        expect({
-            ...changedValue,
-            username: "11451 ",
-        }).toMatchObject(currentValue)
+        expect(changedValue).toMatchObject(currentValue)
         expect(currentValue.wagawaga).toBeUndefined()
 
         expect(errorNotice).toBeCalledTimes(2)
         expect(errorNotice).toBeCalledWith(undefined)
+    })
+
+    it("support dom ref", () => {
+        const fieldModel = new FormControlGroup({})
+
+        expect(fieldModel.dom).toBe(null)
+        const el = document.createElement("div")
+        fieldModel.domRef(el)
+        expect(fieldModel.dom).toBe(el)
+        fieldModel.domRef(null)
+        expect(fieldModel.dom).toBe(null)
     })
 })

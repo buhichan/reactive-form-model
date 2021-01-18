@@ -184,4 +184,18 @@ describe("FormControlList", () => {
         expect(errorListener).toBeCalledTimes(3)
         expect(errorListener).toBeCalledWith(undefined)
     })
+
+    it("support dom ref", () => {
+        const defaultValue = [1]
+        const fieldModel = new FormControlList(defaultValue, value => {
+            return new FormControl(value)
+        })
+
+        expect(fieldModel.dom).toBe(null)
+        const el = document.createElement("div")
+        fieldModel.domRef(el)
+        expect(fieldModel.dom).toBe(el)
+        fieldModel.domRef(null)
+        expect(fieldModel.dom).toBe(null)
+    })
 })

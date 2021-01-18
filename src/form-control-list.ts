@@ -1,9 +1,10 @@
 import { BehaviorSubject, combineLatest, EMPTY, Observable, of } from "rxjs"
 import { debounce, debounceTime, map, switchMap, tap } from "rxjs/operators"
 import { joinValidationInfo } from "./form-control-group"
-import { AbstractControl, FormControlOptions, ValueOfAbstractControl } from "./types"
+import { AbstractControl, FormControlOptions, HasRef, ValueOfAbstractControl } from "./types"
 
-export class FormControlList<Meta, Children extends AbstractControl<unknown>, Type = ValueOfAbstractControl<Children>> implements AbstractControl<Type[]> {
+export class FormControlList<Meta, Children extends AbstractControl<unknown>, Type = ValueOfAbstractControl<Children>>
+    implements AbstractControl<Type[]>, HasRef {
     constructor(
         public defaultValue: Type[],
         public createChild: (x: Type) => Children,
@@ -80,5 +81,10 @@ export class FormControlList<Meta, Children extends AbstractControl<unknown>, Ty
         clone[indexA] = clone[indexB]
         clone[indexB] = tmp
         this.children.next(clone)
+    }
+
+    dom: HTMLElement | null = null
+    domRef = (ref: HTMLElement | null) => {
+        this.dom = ref
     }
 }

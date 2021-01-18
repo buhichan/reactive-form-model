@@ -1,8 +1,8 @@
-import { EMPTY, Subject, identity, Observable, of } from "rxjs"
-import { scan, startWith, publishReplay, refCount, switchMap } from "rxjs/operators"
-import { AbstractControl, FormControlOptions, ValidationInfo } from "./types"
+import { EMPTY, identity, of, Subject } from "rxjs"
+import { publishReplay, refCount, scan, startWith, switchMap } from "rxjs/operators"
+import { AbstractControl, FormControlOptions, HasRef } from "./types"
 
-export class FormControl<Type, Meta = never> implements AbstractControl<Type, Meta> {
+export class FormControl<Type, Meta = never> implements AbstractControl<Type, Meta>, HasRef {
     constructor(public defaultValue: Type, protected options?: FormControlOptions<Type, Meta>) {}
     metadata = this.options?.metadata || EMPTY
     private change$ = new Subject<Type>()
@@ -16,4 +16,9 @@ export class FormControl<Type, Meta = never> implements AbstractControl<Type, Me
         refCount()
     )
     error = !this.options?.validator ? of(null) : this.value.pipe(switchMap(this.options.validator))
+
+    dom: HTMLElement | null = null
+    domRef = (ref: HTMLElement | null) => {
+        this.dom = ref
+    }
 }

@@ -1,16 +1,11 @@
 import { Observable, ObservableInput } from "rxjs"
 
-export interface AbstractControl<Type, Meta = unknown> {
+export interface AbstractControl<Type = unknown, Meta = unknown> {
     value: Observable<Type>
     error: Observable<ValidationInfo>
     change(value: Type): void
     metadata: Observable<Meta>
 }
-
-// export interface FormControl<Type> extends AbstractControl<Type> {
-//     change(value: Type): void
-// }
-
 export type ValidationInfo = string[] | string | void | null | undefined
 
 /**
@@ -25,3 +20,8 @@ export type FormControlOptions<Type, Meta> = {
 }
 
 export type ValueOfAbstractControl<T> = T extends AbstractControl<infer V> ? V : never
+
+export interface HasRef<Element = HTMLElement> {
+    dom: Element | null
+    domRef(ref: Element | null): void
+}

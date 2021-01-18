@@ -49,12 +49,6 @@ export function validateFormControl(
         })
     )
 
-    if (form instanceof FormControlList || form instanceof FormControlGroup) {
-        res.pipe(isEmpty()).subscribe(v => {
-            console.log(form, v)
-        })
-    }
-
     return res
 }
 

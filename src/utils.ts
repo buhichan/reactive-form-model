@@ -1,10 +1,15 @@
-import { EMPTY, Observable, race } from "rxjs"
+import { EMPTY, merge, Observable } from "rxjs"
 import { filter, isEmpty, map, switchMap, take, tap } from "rxjs/operators"
 import { FormControl } from "./form-control"
 import { FormControlGroup } from "./form-control-group"
 import { FormControlList } from "./form-control-list"
 import { AbstractControl, ValidationInfo } from "./types"
 
+/**
+ *
+ * Validate the form, and emit the first error on leaf input it encounters.
+ * 验证表单, 输出其遇到的第一个叶子节点的错误(即会跳过有子字段错误的有错误字段,而使用其子字段错误)
+ */
 export function validateFormControl(
     form: FormControlGroup<any, unknown, any> | FormControlList<unknown, any, unknown> | FormControl<unknown>
 ): Observable<{
@@ -29,24 +34,28 @@ export function validateFormControl(
         const children = (Object.values(form.children) as AbstractControl[]).filter(x => {
             return x instanceof FormControlGroup || x instanceof FormControlList || x instanceof FormControl
         }) as (FormControlGroup<any, unknown, unknown> | FormControlList<unknown, any, unknown> | FormControl<unknown>)[]
-        childError = race(...children.map(x => validateFormControl(x)))
+        childError = merge(...children.map(x => validateFormControl(x))).pipe(take(1))
     } else if (form instanceof FormControlList) {
-        childError = form.children.pipe(
-            switchMap(x => {
-                return race(...x.map(x => validateFormControl(x.child)))
-            })
-        )
+        childError = merge(...form.children.value.map(x => validateFormControl(x.child))).pipe(take(1))
     } else if (form instanceof FormControl) {
         //do nothing
     } else {
         selfError = EMPTY
     }
     const isChildEmpty = childError.pipe(isEmpty())
-    return isChildEmpty.pipe(
+    const res = isChildEmpty.pipe(
         switchMap(x => {
             return x ? selfError : childError
         })
     )
+
+    if (form instanceof FormControlList || form instanceof FormControlGroup) {
+        res.pipe(isEmpty()).subscribe(v => {
+            console.log(form, v)
+        })
+    }
+
+    return res
 }
 
 export function submitForm<Values>(
@@ -56,7 +65,9 @@ export function submitForm<Values>(
         onError: (error: ValidationInfo) => void
     }
 ) {
-    return validateFormControl(form)
+    const validationResult = validateFormControl(form)
+
+    return validationResult
         .pipe(
             tap(v => {
                 if (v.dom) {

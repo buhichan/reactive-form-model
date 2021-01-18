@@ -15,7 +15,7 @@ export class FormControl<Type, Meta = never> implements AbstractControl<Type, Me
         publishReplay(1),
         refCount()
     )
-    error = !this.options?.validator ? of(null) : this.value.pipe(switchMap(this.options.validator))
+    error = !this.options?.validator ? of(null) : this.value.pipe(switchMap(this.options.validator), publishReplay(1), refCount())
 
     dom: HTMLElement | null = null
     domRef = (ref: HTMLElement | null) => {

@@ -1,4 +1,4 @@
-import { EMPTY, merge, Observable } from "rxjs"
+import { EMPTY, merge, Observable, of } from "rxjs"
 import { filter, isEmpty, map, switchMap, take, tap } from "rxjs/operators"
 import { FormControl } from "./form-control"
 import { FormControlGroup } from "./form-control-group"
@@ -52,9 +52,9 @@ export function validateFormControl(
     return res
 }
 
-export function submitForm<Values>(
+export function submitForm<Values, SubmitResult>(
     form: FormControlGroup<any, unknown, Values>,
-    handleSubmit: (values: Values) => Promise<unknown>,
+    handleSubmit: (values: Values) => Promise<SubmitResult>,
     options?: {
         onError: (error: ValidationInfo) => void
     }
@@ -88,7 +88,8 @@ export function submitForm<Values>(
                 } else {
                     return EMPTY
                 }
-            })
+            }),
+            take(1)
         )
         .toPromise()
 }
